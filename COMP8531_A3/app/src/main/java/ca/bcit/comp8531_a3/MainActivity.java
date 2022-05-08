@@ -12,8 +12,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import org.apache.commons.text.RandomStringGenerator;
+
 import java.net.Inet4Address;
 import java.net.InetAddress;
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -59,28 +62,43 @@ public class MainActivity extends AppCompatActivity {
                 beginTransaction();
             }
         });
-
-
     }
 
     private void connect(InetAddress serverIp) {
         //TODO - Set up websockets connection
+
+        isConnected = true;
     }
 
     private void disconnect() {
         //TODO - Tear down websockets connection
+
+        isConnected = false;
     }
 
     private void beginTransaction() {
-        //TODO -
+        // Make a list of dummy entries to insert
+        int numberOfEntries = 10;
+        ArrayList<String> entries = new ArrayList<>();
+        RandomStringGenerator generator = new RandomStringGenerator.Builder()
+                .withinRange('a', 'z')
+                .build();
+
+        for (int i=0; i<=numberOfEntries; i++) {
+            entries.add(generator.generate(20));
+        }
+
+        DbTransaction<String> proposedTransaction = new DbTransaction<>(entries);
+
+        //TODO - Broadcast this over net
     }
 
     private void setTransactionSuccessful() {
-        //TODO -
+        //TODO - Implementation of this
     }
 
     private void endTransaction() {
-        //TODO -
+        //TODO - Implementation of this
     }
 
 }
