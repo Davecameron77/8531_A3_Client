@@ -48,6 +48,8 @@ public class MainActivity extends AppCompatActivity {
         tvTransactions = findViewById(R.id.tv_transaction_text);
         tvLog = findViewById(R.id.tv_log_text);
 
+        client = new OkHttpClient();
+
         btnConnect.setChecked(isConnected);
         btnConnect.setOnCheckedChangeListener((compoundButton, isChecked) -> {
             if (isChecked) {
