@@ -26,4 +26,17 @@ public class DbTransaction<T> {
             entries.add(entry.toString());
         }
     }
+
+    @Override
+    public String toString() {
+        String result = transactionId.toString() + " " + transactionTimestamp;
+        for(String entry : entries) {
+            result += " " + entry;
+        }
+        return result;
+    }
+
+    public UUID getTransactionId(){
+        return transactionId;
+    }
 }

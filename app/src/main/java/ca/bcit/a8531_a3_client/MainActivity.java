@@ -1,15 +1,15 @@
 package ca.bcit.a8531_a3_client;
 
-import androidx.appcompat.app.AppCompatActivity;
-
+import android.app.Application;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import org.apache.commons.text.RandomStringGenerator;
 
@@ -18,18 +18,17 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 
 import ca.bcit.a8531_a3_client.Database.DbTransaction;
+import comp8031.model.Message;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.Response;
 import okhttp3.WebSocket;
-import okhttp3.WebSocketListener;
-import okio.ByteString;
 
 public class MainActivity extends AppCompatActivity {
 
-    private final String WS_TAG = "WebSocketClient";
     private boolean isConnected;
     private OkHttpClient client;
+    private WebSocket ws;
+
 
     private EditText etIpAddress;
     private ToggleButton btnConnect;
@@ -73,19 +72,19 @@ public class MainActivity extends AppCompatActivity {
                 beginTransaction();
             }
         });
+
     }
 
     private void connect(InetAddress serverIp) {
         //TODO - Set up websockets connection
         Request request = new Request.Builder().url("ws://" + serverIp).build();
-        WebSocketClient listener = new WebSocketClient();
-        WebSocket ws = client.newWebSocket(request, listener);
+        ws = client.newWebSocket(request, new WebSocketClient(this));
         isConnected = true;
     }
 
     private void disconnect() {
         //TODO - Tear down websockets connection
-
+        ws.close(0, "Client closing connection");
         isConnected = false;
     }
 
@@ -103,6 +102,12 @@ public class MainActivity extends AppCompatActivity {
 
         DbTransaction<String> proposedTransaction = new DbTransaction<>(entries);
 
+        Message beginMessage = new Message();
+        beginMessage.setFrom("");
+
+        tvLog.append("\nProposing transaction with ID " + proposedTransaction.getTransactionId());
+
+        ws.send(proposedTransaction.toString());
         //TODO - Broadcast this over net
     }
 
@@ -114,38 +119,5 @@ public class MainActivity extends AppCompatActivity {
         //TODO - Implementation of this
     }
 
-    // region - WebSocket code
-    public class WebSocketClient extends WebSocketListener {
-
-        private static final int NORMAL_CLOSURE_STATUS = 1000;
-
-        @Override
-        public void onOpen(WebSocket webSocket, Response response) {
-
-        }
-
-        @Override
-        public void onMessage(WebSocket webSocket, String text) {
-
-        }
-
-        @Override
-        public void onMessage(WebSocket webSocket, ByteString bytes) {
-
-        }
-
-        @Override
-        public void onClosing(WebSocket webSocket, int code, String reason) {
-            webSocket.close(NORMAL_CLOSURE_STATUS, null);
-            Log.d(WS_TAG, "WS connection closing");
-        }
-
-        @Override
-        public void onFailure(WebSocket webSocket, Throwable t, Response response) {
-            Log.e(WS_TAG, "WS Error");
-            Log.e(WS_TAG, t.getLocalizedMessage());
-        }
-    }
-    // endregion
-
 }
+
