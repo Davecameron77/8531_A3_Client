@@ -1,4 +1,4 @@
-package ca.bcit.a8531_a3_client;
+package ca.bcit.a8531_a3_client.Database;
 
 import java.time.Instant;
 import java.util.List;
