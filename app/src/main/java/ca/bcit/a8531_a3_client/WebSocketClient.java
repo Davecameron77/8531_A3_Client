@@ -38,7 +38,15 @@ public class WebSocketClient extends WebSocketListener {
     public void onMessage(WebSocket webSocket, String text) {
         try {
             Message incomingMessage = decoder.decode(text);
-            activity.runOnUiThread(new LogTask(activity, incomingMessage.getContent()));
+            activity.runOnUiThread(new LogTask(activity, incomingMessage.getTransactionId().toString()));
+
+            if (incomingMessage.getTransactionSuccess()) { // Receiving confirmation from remote
+
+            } else { // Receiving instruction from remote
+
+            }
+
+
         } catch (DecodeException e) {
 
         }

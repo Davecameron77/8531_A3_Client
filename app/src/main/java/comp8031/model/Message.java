@@ -1,41 +1,55 @@
 package comp8031.model;
 
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.UUID;
+
 public class Message {
-    
-    private String from;
-    private String to;
-    private String content;
 
-    public String getFrom() {
-        return from;
+    private ArrayList<String> transactionElements;
+    private UUID transactionId;
+    private Instant transactionTime;
+    private boolean indTransactionSuccess;
+
+    public ArrayList<String> getTransactionElements() {
+        return transactionElements;
     }
 
-    public String getTo() {
-        return to;
+    public void setTransactionElements(ArrayList<String> transactionElements) {
+        this.transactionElements = transactionElements;
     }
 
-    public String getContent() {
-        return content;
+    public UUID getTransactionId() {
+        return transactionId;
     }
 
-    public void setFrom(String from) {
-        this.from = from;
+    public void setTransactionId(UUID transactionId) {
+        this.transactionId = transactionId;
     }
 
-    public void setTo(String to) {
-        this.to = to;
+    public Instant getTransactionTime() {
+        return transactionTime;
     }
 
-    public void setContent(String content) {
-        this.content = content;
+    public void setTransactionTime(Instant transactionTime) {
+        this.transactionTime = transactionTime;
+    }
+
+    public boolean getTransactionSuccess() {
+        return  indTransactionSuccess;
+    }
+
+    public void setTransactionSuccess(boolean success) {
+        this.indTransactionSuccess = success;
+    }
+
+    public Message() {
+        transactionId = UUID.randomUUID();
+        transactionTime = Instant.now();
     }
 
     @Override
     public String toString() {
-        return String.format("%s said %s", from, content);
+        return String.format("This is transaction %s", getTransactionId().toString());
     }
-
-
-
-
 }

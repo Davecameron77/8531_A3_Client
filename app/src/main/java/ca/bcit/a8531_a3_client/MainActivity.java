@@ -1,7 +1,7 @@
 package ca.bcit.a8531_a3_client;
 
-import android.app.Application;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -17,8 +17,11 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.util.ArrayList;
 
-import ca.bcit.a8531_a3_client.Database.DbTransaction;
+import javax.websocket.EncodeException;
+
+import ca.bcit.a8531_a3_client.Database.DbHelper;
 import comp8031.model.Message;
+import comp8031.model.MessageEncoder;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.WebSocket;
@@ -28,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean isConnected;
     private OkHttpClient client;
     private WebSocket ws;
-
+    private DbHelper dbHelper;
 
     private EditText etIpAddress;
     private ToggleButton btnConnect;
@@ -41,14 +44,16 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        etIpAddress = findViewById(R.id.et_ip_address);
-        btnConnect = findViewById(R.id.btn_connect);
+        etIpAddress         = findViewById(R.id.et_ip_address);
+        btnConnect          = findViewById(R.id.btn_connect);
         btnStartTransaction = findViewById(R.id.btn_start_transaction);
-        tvTransactions = findViewById(R.id.tv_transaction_text);
-        tvLog = findViewById(R.id.tv_log_text);
+        tvTransactions      = findViewById(R.id.tv_transaction_text);
+        tvLog               = findViewById(R.id.tv_log_text);
 
         client = new OkHttpClient();
+        dbHelper = new DbHelper(getApplicationContext());
 
+        // Connect button listener
         btnConnect.setChecked(isConnected);
         btnConnect.setOnCheckedChangeListener((compoundButton, isChecked) -> {
             if (isChecked) {
@@ -66,29 +71,38 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // Transaction button listener
         btnStartTransaction.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                beginTransaction();
+                beginLocalTransaction();
             }
         });
 
     }
 
+    /**
+     * Connects to WebSocket server
+     * @param serverIp
+     */
     private void connect(InetAddress serverIp) {
-        //TODO - Set up websockets connection
         Request request = new Request.Builder().url("ws://" + serverIp).build();
         ws = client.newWebSocket(request, new WebSocketClient(this));
         isConnected = true;
     }
 
+    /**
+     * Disconnects from WebSocket server
+     */
     private void disconnect() {
-        //TODO - Tear down websockets connection
         ws.close(0, "Client closing connection");
         isConnected = false;
     }
 
-    private void beginTransaction() {
+    /**
+     * Starts a new transaction
+     */
+    private void beginLocalTransaction() {
         // Make a list of dummy entries to insert
         int numberOfEntries = 10;
         ArrayList<String> entries = new ArrayList<>();
@@ -100,15 +114,25 @@ public class MainActivity extends AppCompatActivity {
             entries.add(generator.generate(20));
         }
 
-        DbTransaction<String> proposedTransaction = new DbTransaction<>(entries);
+        // Start local insert
+        dbHelper.insert(entries);
 
+        // Create and encode message
         Message beginMessage = new Message();
-        beginMessage.setFrom("");
+        beginMessage.setTransactionElements(entries);
+        String serializedMessage = "";
+        try {
+            MessageEncoder encoder = new MessageEncoder();
+            serializedMessage = encoder.encode(beginMessage);
+        } catch (EncodeException ex) {
+            Log.e("Message Encoder", "Error encoding message with id " + beginMessage.getTransactionId().toString());
+        }
 
-        tvLog.append("\nProposing transaction with ID " + proposedTransaction.getTransactionId());
-
-        ws.send(proposedTransaction.toString());
-        //TODO - Broadcast this over net
+        // Broadcast the transaction
+        if (!serializedMessage.isEmpty()) {
+            ws.send(serializedMessage);
+            tvLog.append("\nProposing transaction with ID " + beginMessage.getTransactionId().toString());
+        }
     }
 
     private void setTransactionSuccessful() {
@@ -118,6 +142,5 @@ public class MainActivity extends AppCompatActivity {
     private void endTransaction() {
         //TODO - Implementation of this
     }
-
 }
 

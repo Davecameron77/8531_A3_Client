@@ -11,13 +11,18 @@ public class DbHelper extends SQLiteOpenHelper {
 
     public static final int DATABASE_VERSION = 1;
     public static final String DATABASE_NAME = "Replication.db";
+
     private static final String SQL_CREATE_ENTRIES =
             "CREATE TABLE " + ReplicationContract.ReplicationEntry.TABLE_NAME + " (" +
                     ReplicationContract.ReplicationEntry._ID + " INTEGER PRIMARY KEY," +
                     ReplicationContract.ReplicationEntry.COLUMN_NAME_CONTENTS + " TEXT)";
-
     private static final String SQL_DELETE_ENTRIES =
             "DROP TABLE IF EXISTS " + ReplicationContract.ReplicationEntry.TABLE_NAME;
+
+    public boolean transactionInProgress = false;
+    private SQLiteDatabase db;
+
+    //region Core methods
 
     public DbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -26,6 +31,7 @@ public class DbHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
         sqLiteDatabase.execSQL(SQL_CREATE_ENTRIES);
+        db = getWritableDatabase();
     }
 
     @Override
@@ -38,13 +44,31 @@ public class DbHelper extends SQLiteOpenHelper {
         onUpgrade(sqLiteDatabase, oldVersion, newVersion);
     }
 
+    //endregion
+
+    // Operations
+
     public <T> void insert(List<T> itemsToInsert) {
-        SQLiteDatabase sqLiteDatabase = getWritableDatabase();
+        db.beginTransaction();
+        transactionInProgress = true;
 
         for (T item : itemsToInsert) {
             ContentValues values = new ContentValues();
             values.put(ReplicationContract.ReplicationEntry.COLUMN_NAME_CONTENTS, item.toString());
-            sqLiteDatabase.insert(ReplicationContract.ReplicationEntry.TABLE_NAME, null, values);
+            db.insert(ReplicationContract.ReplicationEntry.TABLE_NAME, null, values);
         }
+    }
+
+    public boolean commitTransaction() {
+        db.setTransactionSuccessful();
+        db.endTransaction();
+        transactionInProgress = false;
+        return true;
+    }
+
+    public boolean rollbackTransaction() {
+        db.endTransaction();
+        transactionInProgress = false;
+        return true;
     }
 }
