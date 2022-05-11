@@ -93,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
      * Disconnects from WebSocket server
      */
     private void disconnect() {
-        ws.close(0, "Client closing connection");
+        ws.close(1000, "Client closing connection");
         isConnected = false;
     }
 
