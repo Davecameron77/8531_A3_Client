@@ -2,8 +2,6 @@ package ca.bcit.a8531_a3_client;
 
 import android.util.Log;
 
-import javax.websocket.DecodeException;
-
 import comp8031.model.Message;
 import comp8031.model.MessageDecoder;
 import comp8031.model.MessageEncoder;
@@ -47,7 +45,7 @@ public class WebSocketClient extends WebSocketListener {
             }
 
 
-        } catch (DecodeException e) {
+        } catch (Exception e) {
 
         }
     }

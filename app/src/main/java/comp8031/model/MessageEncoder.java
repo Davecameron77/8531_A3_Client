@@ -1,26 +1,19 @@
 package comp8031.model;
 
-import javax.websocket.EncodeException;
-import javax.websocket.Encoder;
-import javax.websocket.EndpointConfig;
-
 import com.google.gson.Gson;
 
-public class MessageEncoder implements Encoder.Text<Message> {
+public class MessageEncoder {
 
     private static Gson gson = new Gson();
 
-    @Override
-    public String encode(Message message) throws EncodeException {
+    public String encode(Message message) {
         return gson.toJson(message);
     }
 
-    @Override
-    public void init(EndpointConfig endpointConfig) {
+    public void init(Object endpointConfig) {
         // Custom initialization logic
     }
 
-    @Override
     public void destroy() {
         // Close resources
     }

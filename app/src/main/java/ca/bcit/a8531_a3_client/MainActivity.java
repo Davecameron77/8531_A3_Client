@@ -17,8 +17,6 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.util.ArrayList;
 
-import javax.websocket.EncodeException;
-
 import ca.bcit.a8531_a3_client.Database.DbHelper;
 import comp8031.model.Message;
 import comp8031.model.MessageEncoder;
@@ -124,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             MessageEncoder encoder = new MessageEncoder();
             serializedMessage = encoder.encode(beginMessage);
-        } catch (EncodeException ex) {
+        } catch (Exception ex) {
             Log.e("Message Encoder", "Error encoding message with id " + beginMessage.getTransactionId().toString());
         }
 
