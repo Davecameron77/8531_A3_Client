@@ -2,6 +2,7 @@ package ca.bcit.a8531_a3_client;
 
 import android.util.Log;
 
+import ca.bcit.a8531_a3_client.Database.DbHelper;
 import comp8031.model.Message;
 import comp8031.model.MessageDecoder;
 import comp8031.model.MessageEncoder;
@@ -38,15 +39,21 @@ public class WebSocketClient extends WebSocketListener {
             Message incomingMessage = decoder.decode(text);
             activity.runOnUiThread(new LogTask(activity, incomingMessage.getTransactionId().toString()));
 
-            if (incomingMessage.getTransactionSuccess()) { // Receiving confirmation from remote
-
-            } else { // Receiving instruction from remote
-
+            if (incomingMessage.getTransactionSuccess()) {
+                // Case A: Receiving confirmation from remote
+                // Ack successful receipt in MainActivity
+                activity.numberOfSuccesses += 1;
+            } else {
+                // Case B: Receiving instruction from remote
+                // completeRemoteTransaction() writes to DB and commits
+                // setTransactionSuccessful sends back confirmation
+                if (activity.completeRemoteTransaction(incomingMessage.getTransactionElements())) {
+                    incomingMessage.setTransactionSuccess(true);
+                    activity.setTransactionSuccessful(incomingMessage);
+                }
             }
-
-
         } catch (Exception e) {
-
+            Log.e(WS_TAG, "Error handling incoming messages");
         }
     }
 
