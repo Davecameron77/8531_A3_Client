@@ -2,6 +2,7 @@ package ca.bcit.a8531_a3_client;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -68,12 +69,15 @@ public class MainActivity extends AppCompatActivity {
             if (isChecked) {
                 try {
                     String serverIp = etIpAddress.getText().toString();
-                    serverIp = serverIp.isEmpty() ? "localhost" : serverIp;
+                    serverIp = serverIp.isEmpty() ? "10.0.2.2" : serverIp;
                     InetAddress remoteIp = Inet4Address.getByName(serverIp);
                     connect(remoteIp);
+
                 } catch (Exception ex) {
                     isConnected = false;
                     Toast.makeText(getBaseContext(), "Error connecting", Toast.LENGTH_LONG).show();
+                    Log.e("Error", "Error: " + ex.getLocalizedMessage());
+                    ex.printStackTrace();
                 }
             } else {
                 disconnect();
@@ -91,12 +95,9 @@ public class MainActivity extends AppCompatActivity {
      * @param serverIp
      */
     private void connect(InetAddress serverIp) {
+
         // This will default to ws://localhost/bcit/websocket/device if the user enters nothing
         Request request = new Request.Builder().url("ws://" + serverIp.toString() + ":8080/bcit/websocket/device").build();
-
-        //TODO - This is a temporary URL for testing
-        Request temp = new Request.Builder().url("wss://socketsbay.com/wss/v2/2/demo/").build();
-
         WebSocketClient wsClient = new WebSocketClient(this);
         ws = client.newWebSocket(request, wsClient);
 
