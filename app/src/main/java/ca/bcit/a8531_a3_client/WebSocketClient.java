@@ -31,6 +31,7 @@ public class WebSocketClient extends WebSocketListener {
     public void onOpen(WebSocket webSocket, Response response) {
         final String message = response.message();
         activity.runOnUiThread(new LogTask(activity, message));
+        Log.d(WS_TAG, "WS connection opening");
     }
 
     @Override

@@ -68,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
             if (isChecked) {
                 try {
                     String serverIp = etIpAddress.getText().toString();
-                    serverIp = serverIp.isEmpty() ? "127.0.0.1" : serverIp;
+                    serverIp = serverIp.isEmpty() ? "localhost" : serverIp;
                     InetAddress remoteIp = Inet4Address.getByName(serverIp);
                     connect(remoteIp);
                 } catch (Exception ex) {
@@ -91,13 +91,15 @@ public class MainActivity extends AppCompatActivity {
      * @param serverIp
      */
     private void connect(InetAddress serverIp) {
-        // This will default to ws://127.0.0.1/bcit/websocket/device if the user enters nothing
+        // This will default to ws://localhost/bcit/websocket/device if the user enters nothing
         Request request = new Request.Builder().url("ws://" + serverIp.toString() + ":8080/bcit/websocket/device").build();
+
         //TODO - This is a temporary URL for testing
         Request temp = new Request.Builder().url("wss://socketsbay.com/wss/v2/2/demo/").build();
-        WebSocketClient wsClient = new WebSocketClient(this);
 
-        ws = client.newWebSocket(temp, wsClient);
+        WebSocketClient wsClient = new WebSocketClient(this);
+        ws = client.newWebSocket(request, wsClient);
+
         Toast.makeText(this, "Connected", Toast.LENGTH_LONG).show();
         isConnected = true;
     }
