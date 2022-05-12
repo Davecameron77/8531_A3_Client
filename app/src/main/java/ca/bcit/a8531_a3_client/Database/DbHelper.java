@@ -31,7 +31,6 @@ public class DbHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
         sqLiteDatabase.execSQL(SQL_CREATE_ENTRIES);
-        db = getWritableDatabase();
     }
 
     @Override
@@ -49,6 +48,9 @@ public class DbHelper extends SQLiteOpenHelper {
     // Operations
 
     public <T> void insert(List<T> itemsToInsert) {
+        if (db == null) {
+            db = getWritableDatabase();
+        }
         db.beginTransaction();
         transactionInProgress = true;
 
@@ -60,6 +62,9 @@ public class DbHelper extends SQLiteOpenHelper {
     }
 
     public boolean commitTransaction() {
+        if (db == null) {
+            db = getWritableDatabase();
+        }
         db.setTransactionSuccessful();
         db.endTransaction();
         transactionInProgress = false;
@@ -67,6 +72,9 @@ public class DbHelper extends SQLiteOpenHelper {
     }
 
     public boolean rollbackTransaction() {
+        if (db == null) {
+            db = getWritableDatabase();
+        }
         db.endTransaction();
         transactionInProgress = false;
         return true;

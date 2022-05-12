@@ -1,5 +1,6 @@
 package ca.bcit.a8531_a3_client;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -30,6 +31,7 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean isConnected;
     private OkHttpClient client;
+    private WebSocketClient wsClient;
     private WebSocket ws;
     private DbHelper dbHelper;
     private final int NUMBER_OF_REMOTE = 2;
@@ -53,8 +55,12 @@ public class MainActivity extends AppCompatActivity {
         tvLog               = findViewById(R.id.tv_log_text);
 
         client = new OkHttpClient();
+        wsClient = new WebSocketClient(this);
         dbHelper = new DbHelper(getApplicationContext());
         numberOfSuccesses = 0;
+
+        tvLog.setText("");
+        tvTransactions.setText("");
 
         // Connect button listener
         btnConnect.setChecked(isConnected);
@@ -62,6 +68,7 @@ public class MainActivity extends AppCompatActivity {
             if (isChecked) {
                 try {
                     String serverIp = etIpAddress.getText().toString();
+                    serverIp = serverIp.isEmpty() ? "127.0.0.1" : serverIp;
                     InetAddress remoteIp = Inet4Address.getByName(serverIp);
                     connect(remoteIp);
                 } catch (Exception ex) {
@@ -75,12 +82,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // Transaction button listener
-        btnStartTransaction.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                beginLocalTransaction(generateEntries());
-            }
-        });
+        btnStartTransaction.setOnClickListener(view -> beginLocalTransaction(generateEntries()));
 
     }
 
@@ -89,8 +91,14 @@ public class MainActivity extends AppCompatActivity {
      * @param serverIp
      */
     private void connect(InetAddress serverIp) {
-        Request request = new Request.Builder().url("ws://" + serverIp).build();
-        ws = client.newWebSocket(request, new WebSocketClient(this));
+        // This will default to ws://127.0.0.1/bcit/websocket/device if the user enters nothing
+        Request request = new Request.Builder().url("ws://" + serverIp.toString() + ":8080/bcit/websocket/device").build();
+        //TODO - This is a temporary URL for testing
+        Request temp = new Request.Builder().url("wss://socketsbay.com/wss/v2/2/demo/").build();
+        WebSocketClient wsClient = new WebSocketClient(this);
+
+        ws = client.newWebSocket(temp, wsClient);
+        Toast.makeText(this, "Connected", Toast.LENGTH_LONG).show();
         isConnected = true;
     }
 
@@ -106,12 +114,22 @@ public class MainActivity extends AppCompatActivity {
      * Starts a new transaction
      */
     protected void beginLocalTransaction(ArrayList<String> entries) {
+        if (!isConnected) {
+            Toast.makeText(this, "Error: Not Connected", Toast.LENGTH_LONG).show();
+            return;
+        }
+
         // Start local insert
         dbHelper.insert(entries);
 
         // Create and encode message
         Message beginMessage = new Message();
         beginMessage.setTransactionElements(entries);
+
+        //TODO - Doesn't write to the GUI, stuck in infinite loop
+        tvLog.append("\nProposing transaction with ID " + beginMessage.getTransactionId().toString());
+        tvLog.postInvalidate();
+
         String serializedMessage = "";
         try {
             MessageEncoder encoder = new MessageEncoder();
@@ -123,7 +141,6 @@ public class MainActivity extends AppCompatActivity {
         // Broadcast the transaction
         if (!serializedMessage.isEmpty()) {
             ws.send(serializedMessage);
-            tvLog.append("\nProposing transaction with ID " + beginMessage.getTransactionId().toString());
         }
 
         // Infinite loop waiting for ACKs
