@@ -92,4 +92,36 @@
         android:id="@+id/tv_log_text"
         android:text="Lorem Ipsum....\nLorem Ipsum...." />
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+        <EditText
+            android:id="@+id/et_contents_data"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:hint="text" />
+
+        <Button
+            android:id="@+id/btn_add_row_data"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="Add" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
+
+        <TableLayout
+            android:id="@+id/tableLayoutData"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="10dp"
+            android:shrinkColumns="*"
+            android:stretchColumns="*" >
+        </TableLayout>
+    </ScrollView>
+
 </androidx.appcompat.widget.LinearLayoutCompat>
