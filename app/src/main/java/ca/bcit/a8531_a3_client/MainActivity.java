@@ -1,12 +1,16 @@
 package ca.bcit.a8531_a3_client;
 
-import android.app.Activity;
+
+import android.database.Cursor;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.StrictMode;
 import android.util.Log;
-import android.view.View;
+import android.view.Gravity;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TableLayout;
+import android.widget.TableRow;
+import android.widget.TableRow.LayoutParams;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -15,7 +19,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import org.apache.commons.text.RandomStringGenerator;
 
-import java.lang.reflect.Array;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -26,7 +29,6 @@ import comp8031.model.MessageEncoder;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.WebSocket;
-import okhttp3.WebSocketListener;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -44,16 +46,22 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvLog;
     protected int numberOfSuccesses;
 
+    TableLayout table_layout_data;
+    EditText et_contents;
+    Button btnAddRow;
+    SQLController sqlcon;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        etIpAddress         = findViewById(R.id.et_ip_address);
-        btnConnect          = findViewById(R.id.btn_connect);
+        etIpAddress = findViewById(R.id.et_ip_address);
+        btnConnect = findViewById(R.id.btn_connect);
         btnStartTransaction = findViewById(R.id.btn_start_transaction);
-        tvTransactions      = findViewById(R.id.tv_transaction_text);
-        tvLog               = findViewById(R.id.tv_log_text);
+        tvTransactions = findViewById(R.id.tv_transaction_text);
+        tvLog = findViewById(R.id.tv_log_text);
 
         client = new OkHttpClient();
         wsClient = new WebSocketClient(this);
@@ -84,14 +92,24 @@ public class MainActivity extends AppCompatActivity {
                 isConnected = false;
             }
         });
-
         // Transaction button listener
         btnStartTransaction.setOnClickListener(view -> beginLocalTransaction(generateEntries()));
 
+        // SQLite data
+        et_contents = (EditText) findViewById(R.id.et_contents_data);
+        btnAddRow = (Button) findViewById(R.id.btn_add_row_data);
+        table_layout_data = (TableLayout) findViewById(R.id.tableLayoutData);
+
+        sqlcon = new SQLController(this);
+
+        btnAddRow.setOnClickListener(view -> new TableDataAsync().execute());
+
+        refreshDataTable();
     }
 
     /**
      * Connects to WebSocket server
+     *
      * @param serverIp IP Address of remote server
      */
     private void connect(InetAddress serverIp) {
@@ -161,6 +179,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Intended to be run by remote nodes, will insert and commit in the same call
+     *
      * @param entries Entries to insert
      * @return true on success
      */
@@ -173,6 +192,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Broadcasts transaction success by returning the message
      * message.transactionSuccess should == true
+     *
      * @param completeMessage The message to broadcast back
      */
     protected void setTransactionSuccessful(Message completeMessage) {
@@ -187,6 +207,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Generates boilerplate for transactions
+     *
      * @return ArrayList<String> of dummy entries
      */
     protected ArrayList<String> generateEntries() {
@@ -197,12 +218,75 @@ public class MainActivity extends AppCompatActivity {
                 .withinRange('a', 'z')
                 .build();
 
-        for (int i=0; i<=numberOfEntries; i++) {
+        for (int i = 0; i <= numberOfEntries; i++) {
             entries.add(generator.generate(20));
         }
 
         return entries;
     }
 
-}
+    private class TableDataAsync extends AsyncTask {
 
+        @Override
+        protected Object doInBackground(Object[] objects) {
+            /*
+            Get the text data and insert to database
+             */
+            String contents = et_contents.getText().toString();
+
+            // inserting data
+            ArrayList<String> entries = new ArrayList<>();
+            entries.add(contents);
+            beginLocalTransaction(entries);
+            return null;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            table_layout_data.removeAllViews();
+        }
+
+        @Override
+        protected void onPostExecute(Object o) {
+            super.onPostExecute(o);
+            refreshDataTable();
+        }
+    }
+
+    private void refreshDataTable() {
+
+        sqlcon.open();
+        Cursor c = sqlcon.readEntry();
+
+        int rows = c.getCount();
+        int cols = c.getColumnCount();
+
+        c.moveToFirst();
+
+        // outer for loop
+        for (int i = 0; i < rows; i++) {
+
+            TableRow row = new TableRow(this);
+            row.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+
+            // inner for loop
+            for (int j = 0; j < cols; j++) {
+
+                TextView tv = new TextView(this);
+                tv.setLayoutParams(new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
+                tv.setGravity(Gravity.CENTER);
+                tv.setTextSize(18);
+                tv.setPadding(0, 5, 0, 5);
+
+                tv.setText(c.getString(j));
+
+                row.addView(tv);
+            }
+            c.moveToNext();
+            table_layout_data.addView(row);
+        }
+        sqlcon.close();
+    }
+
+}

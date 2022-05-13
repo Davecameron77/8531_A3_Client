@@ -11,6 +11,7 @@ public final class ReplicationContract {
 
     public static class ReplicationEntry implements BaseColumns {
         public static final String TABLE_NAME = "entry";
+        public static final String MEMBER_ID = "_id";
         public static final String COLUMN_NAME_CONTENTS = "contents";
     }
 }
