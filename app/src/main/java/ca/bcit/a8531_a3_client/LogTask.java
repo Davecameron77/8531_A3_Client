@@ -12,6 +12,6 @@ public class LogTask implements Runnable {
     }
 
     public void run() {
-        ((TextView) activity.findViewById(R.id.tv_log_text)).append("\n" + logMessage);
+        ((TextView) activity.findViewById(R.id.tv_log_text)).append("\nTransaction ID: " + logMessage);
     }
 }

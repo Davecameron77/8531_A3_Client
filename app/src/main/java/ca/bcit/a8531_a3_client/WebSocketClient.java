@@ -2,7 +2,11 @@ package ca.bcit.a8531_a3_client;
 
 import android.util.Log;
 
-import ca.bcit.a8531_a3_client.Database.DbHelper;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.UUID;
+
 import comp8031.model.Message;
 import comp8031.model.MessageDecoder;
 import comp8031.model.MessageEncoder;
@@ -16,29 +20,41 @@ public class WebSocketClient extends WebSocketListener {
     private static final int NORMAL_CLOSURE_STATUS = 1000;
     private final String WS_TAG = "WebSocketClient";
 
-    private MessageEncoder encoder;
-    private MessageDecoder decoder;
-    private MainActivity activity;
+    private final MessageEncoder encoder;
+    private final MessageDecoder decoder;
+    private final MainActivity activity;
+    private final ArrayList<UUID> processedMessages;
 
     public WebSocketClient(MainActivity mainActivity){
         super();
         activity = mainActivity;
         encoder = new MessageEncoder();
         decoder = new MessageDecoder();
+        processedMessages = new ArrayList<>();
     }
 
     @Override
-    public void onOpen(WebSocket webSocket, Response response) {
-        final String message = response.message();
-        activity.runOnUiThread(new LogTask(activity, message));
+    public void onOpen(@NotNull WebSocket webSocket, @NotNull Response response) {
         Log.d(WS_TAG, "WS connection opening");
+        final String message = response.message();
+        if (response.message().contains("Switching Protocols")) {
+            return;
+        }
+        activity.runOnUiThread(new LogTask(activity, message));
     }
 
     @Override
-    public void onMessage(WebSocket webSocket, String text) {
+    public void onMessage(@NotNull WebSocket webSocket, @NotNull String text) {
         try {
             Message incomingMessage = decoder.decode(text);
             activity.runOnUiThread(new LogTask(activity, incomingMessage.getTransactionId().toString()));
+
+            // Don't process the same message twice
+            if (processedMessages.contains(incomingMessage.getTransactionId())) {
+                return;
+            } else {
+                processedMessages.add(incomingMessage.getTransactionId());
+            }
 
             if (incomingMessage.getTransactionSuccess()) {
                 // Case A: Receiving confirmation from remote
@@ -59,18 +75,18 @@ public class WebSocketClient extends WebSocketListener {
     }
 
     @Override
-    public void onMessage(WebSocket webSocket, ByteString bytes) {
+    public void onMessage(@NotNull WebSocket webSocket, @NotNull ByteString bytes) {
 
     }
 
     @Override
-    public void onClosing(WebSocket webSocket, int code, String reason) {
+    public void onClosing(@NotNull WebSocket webSocket, int code, @NotNull String reason) {
         webSocket.close(NORMAL_CLOSURE_STATUS, null);
         Log.d(WS_TAG, "WS connection closing");
     }
 
     @Override
-    public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+    public void onFailure(@NotNull WebSocket webSocket, Throwable t, Response response) {
         Log.e(WS_TAG, "WS Error");
         Log.e(WS_TAG, t.getLocalizedMessage());
     }

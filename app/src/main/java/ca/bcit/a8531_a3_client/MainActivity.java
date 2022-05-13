@@ -92,11 +92,11 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Connects to WebSocket server
-     * @param serverIp
+     * @param serverIp IP Address of remote server
      */
     private void connect(InetAddress serverIp) {
 
-        // This will default to ws://localhost/bcit/websocket/device if the user enters nothing
+        // This will default to ws://10.0.2.2/bcit/websocket/device if the user enters nothing
         Request request = new Request.Builder().url("ws://" + serverIp.toString() + ":8080/bcit/websocket/device").build();
         WebSocketClient wsClient = new WebSocketClient(this);
         ws = client.newWebSocket(request, wsClient);
