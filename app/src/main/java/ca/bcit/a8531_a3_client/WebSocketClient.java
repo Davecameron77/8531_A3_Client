@@ -23,7 +23,7 @@ public class WebSocketClient extends WebSocketListener {
     private final MessageEncoder encoder;
     private final MessageDecoder decoder;
     private final MainActivity activity;
-    private final ArrayList<UUID> processedMessages;
+    private final ArrayList<String> processedMessages;
 
     public WebSocketClient(MainActivity mainActivity){
         super();
