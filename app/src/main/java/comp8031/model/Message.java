@@ -1,9 +1,13 @@
 package comp8031.model;
 
+import android.annotation.SuppressLint;
+
+import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.UUID;
 
 public class Message {
@@ -46,8 +50,8 @@ public class Message {
     }
 
     public Message() {
-        DateTimeFormatter customFormatte = DateTimeFormatter.ofPattern("MM/dd/yyyy 'at' hh:mm:ss");
-        transactionTime = customFormatte.format(LocalTime.now());
+        SimpleDateFormat customFormatte = new SimpleDateFormat("MMM/dd/yyyy 'at' hh:mm:ss");
+        transactionTime = customFormatte.format(new Date());
         transactionId = UUID.randomUUID().toString();
     }
 
