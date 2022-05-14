@@ -19,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import org.apache.commons.text.RandomStringGenerator;
 
+import java.lang.reflect.Array;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ import comp8031.model.MessageEncoder;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.WebSocket;
+import okhttp3.WebSocketListener;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -37,14 +39,16 @@ public class MainActivity extends AppCompatActivity {
     private WebSocketClient wsClient;
     private WebSocket ws;
     private DbHelper dbHelper;
+
     private final int NUMBER_OF_REMOTE = 2;
+    private boolean transactionInProgress = false;
+    protected int numberOfSuccesses;
 
     private EditText etIpAddress;
     private ToggleButton btnConnect;
     private Button btnStartTransaction;
     private TextView tvTransactions;
     private TextView tvLog;
-    protected int numberOfSuccesses;
 
     TableLayout table_layout_data;
     EditText et_contents;
@@ -92,6 +96,7 @@ public class MainActivity extends AppCompatActivity {
                 isConnected = false;
             }
         });
+
         // Transaction button listener
         btnStartTransaction.setOnClickListener(view -> beginLocalTransaction(generateEntries()));
 
@@ -136,9 +141,14 @@ public class MainActivity extends AppCompatActivity {
      */
     protected void beginLocalTransaction(ArrayList<String> entries) {
         if (!isConnected) {
-            Toast.makeText(this, "Error: Not Connected", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Error: Not Connected", Toast.LENGTH_SHORT).show();
             return;
         }
+        if (transactionInProgress) {
+            Toast.makeText(this, "Error: Transaction already in progress", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        transactionInProgress = true;
 
         // Start local insert
         dbHelper.insert(entries);
@@ -147,16 +157,14 @@ public class MainActivity extends AppCompatActivity {
         Message beginMessage = new Message();
         beginMessage.setTransactionElements(entries);
 
-        //TODO - Doesn't write to the GUI, stuck in infinite loop
-        tvLog.append("\nProposing transaction with ID " + beginMessage.getTransactionId().toString());
-        tvLog.postInvalidate();
+        runOnUiThread(new TransactionTask(this, beginMessage.getTransactionId()));
 
         String serializedMessage = "";
         try {
             MessageEncoder encoder = new MessageEncoder();
             serializedMessage = encoder.encode(beginMessage);
         } catch (Exception ex) {
-            Log.e("Message Encoder", "Error encoding message with id " + beginMessage.getTransactionId().toString());
+            Log.e("Message Encoder", "Error encoding message with id " + beginMessage.getTransactionId());
         }
 
         // Broadcast the transaction
@@ -164,22 +172,11 @@ public class MainActivity extends AppCompatActivity {
             ws.send(serializedMessage);
         }
 
-        // Infinite loop waiting for ACKs
-        boolean transactionInProgress = true;
-        while (transactionInProgress) {
-            if (numberOfSuccesses == NUMBER_OF_REMOTE) {
-                // After 2 acks,
-                if (dbHelper.commitTransaction()) {
-                    numberOfSuccesses = 0;
-                    transactionInProgress = false;
-                }
-            }
-        }
+        refreshDataTable();
     }
 
     /**
      * Intended to be run by remote nodes, will insert and commit in the same call
-     *
      * @param entries Entries to insert
      * @return true on success
      */
@@ -192,22 +189,32 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Broadcasts transaction success by returning the message
      * message.transactionSuccess should == true
-     *
      * @param completeMessage The message to broadcast back
      */
-    protected void setTransactionSuccessful(Message completeMessage) {
+    protected void setTransactionSuccessful(Message completeMessage) throws InterruptedException {
         MessageEncoder encoder = new MessageEncoder();
         String serializedMessage = encoder.encode(completeMessage);
         ws.send(serializedMessage);
     }
 
-    private void endTransaction() {
-        //TODO - Implementation of this
+    /**
+     * Finalizes a transaction after the correct amount of ACKs
+     */
+    protected boolean endTransaction() {
+        if (numberOfSuccesses == NUMBER_OF_REMOTE) {
+            if (dbHelper.commitTransaction()) {
+                numberOfSuccesses = 0;
+                transactionInProgress = false;
+                runOnUiThread(new UpdateTask(this));
+
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
      * Generates boilerplate for transactions
-     *
      * @return ArrayList<String> of dummy entries
      */
     protected ArrayList<String> generateEntries() {
@@ -218,7 +225,7 @@ public class MainActivity extends AppCompatActivity {
                 .withinRange('a', 'z')
                 .build();
 
-        for (int i = 0; i <= numberOfEntries; i++) {
+        for (int i=0; i<=numberOfEntries; i++) {
             entries.add(generator.generate(20));
         }
 

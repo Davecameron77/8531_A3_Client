@@ -1,17 +1,15 @@
 package comp8031.model;
 
-import android.annotation.SuppressLint;
-
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.Locale;
 import java.util.UUID;
 
 public class Message {
-
     private ArrayList<String> transactionElements;
     private String transactionId;
     private String transactionTime;
@@ -50,14 +48,14 @@ public class Message {
     }
 
     public Message() {
-        SimpleDateFormat customFormatte = new SimpleDateFormat("MMM/dd/yyyy 'at' hh:mm:ss");
-        transactionTime = customFormatte.format(new Date());
+//        DateTimeFormatter customFormatte = DateTimeFormatter.ofPattern("MMM/dd/yyyy 'at' hh:mm:ss");
+//        transactionTime = customFormat.format(LocalTime.now());
+        transactionTime = Instant.now().toString();
         transactionId = UUID.randomUUID().toString();
     }
 
-
     @Override
     public String toString() {
-        return String.format("This is transaction %s", getTransactionId().toString());
+        return String.format("This is transaction %s", getTransactionId());
     }
 }
