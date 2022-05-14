@@ -1,14 +1,18 @@
 package comp8031.model;
 
 import java.time.Instant;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.UUID;
 
 public class Message {
-
     private ArrayList<String> transactionElements;
-    private UUID transactionId;
-    private Instant transactionTime;
+    private String transactionId;
+    private String transactionTime;
     private boolean indTransactionSuccess;
 
     public ArrayList<String> getTransactionElements() {
@@ -19,19 +23,19 @@ public class Message {
         this.transactionElements = transactionElements;
     }
 
-    public UUID getTransactionId() {
+    public String getTransactionId() {
         return transactionId;
     }
 
-    public void setTransactionId(UUID transactionId) {
+    public void setTransactionId(String transactionId) {
         this.transactionId = transactionId;
     }
 
-    public Instant getTransactionTime() {
+    public String getTransactionTime() {
         return transactionTime;
     }
 
-    public void setTransactionTime(Instant transactionTime) {
+    public void setTransactionTime(String transactionTime) {
         this.transactionTime = transactionTime;
     }
 
@@ -44,12 +48,14 @@ public class Message {
     }
 
     public Message() {
-        transactionId = UUID.randomUUID();
-        transactionTime = Instant.now();
+//        DateTimeFormatter customFormatte = DateTimeFormatter.ofPattern("MMM/dd/yyyy 'at' hh:mm:ss");
+//        transactionTime = customFormat.format(LocalTime.now());
+        transactionTime = Instant.now().toString();
+        transactionId = UUID.randomUUID().toString();
     }
 
     @Override
     public String toString() {
-        return String.format("This is transaction %s", getTransactionId().toString());
+        return String.format("This is transaction %s", getTransactionId());
     }
 }
